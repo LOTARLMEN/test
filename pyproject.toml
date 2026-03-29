@@ -1,0 +1,16 @@
+[project]
+name = "fastapi-template"
+version = "0.1.0"
+description = "template for fastapi applications"
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
+    "fastapi>=0.135.2",
+    "mypy>=1.19.1",
+    "pydantic-settings>=2.13.1",
+    "ruff>=0.15.8",
+    "sqlalchemy>=2.0.48",
+    "uvicorn>=0.42.0",
+]
