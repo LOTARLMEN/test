@@ -12,7 +12,7 @@ from alembic import context
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
 
-from src.infrastructure.db.models.wallet_model import Base
+from src.infrastructure.db.models.wallet import Base
 from src.config.db_config import setting
 
 # this is the Alembic Config object, which provides
