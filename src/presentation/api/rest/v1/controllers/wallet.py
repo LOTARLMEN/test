@@ -1,37 +1,64 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.infrastructure.db.session import get_async_session
-from src.infrastructure.db.models.wallet_model import Wallet
-from src.application.dtos.schemas import OperationBody, OperationType
+from src.application.dtos.operation import OperationBody, OperationType
+from src.application.dtos.wallet import (
+    WalletCreate,
+    WalletListResponse,
+    WalletSingleResponse,
+)
+from src.infrastructure import (
+    DeleteUsecase,
+    GetUsecase,
+    DepositUsecase,
+    WithdrawUsecase,
+    CreateUsecase,
+)
 
 router = APIRouter(prefix="/api/v1/wallets", tags=["Wallets"])
 
 
-@router.get("/{uuid}")
-async def get_wallet(uuid: str, db: AsyncSession = Depends(get_async_session)):
-    valid_uuid = UUID(uuid)
-    wallet = await Wallet.get_wallet_by_uuid(db, valid_uuid)
+@router.get("/{wallet_uuid}")
+async def get_wallet(
+    wallet_uuid: str,
+    get_uc: GetUsecase,
+):
+    valid_uuid = UUID(wallet_uuid)
+    wallet = await get_uc.get_wallet_by_uuid(valid_uuid)
     return {"result": wallet}
 
 
-@router.post("/{uuid}/operation")
-async def wallet_operation(uuid: str, operation_body: OperationBody,
-                           db: AsyncSession = Depends(get_async_session)):
-    try:
-        valid_uuid = UUID(uuid)
+@router.post("/{wallet_uuid}/operation")
+async def wallet_operation(
+    wallet_uuid: UUID,
+    operation: OperationBody,
+    deposit_uc: DepositUsecase,
+    withdraw_uc: WithdrawUsecase,
+):
+    if operation.operation == OperationType.deposit:
+        return await deposit_uc.execute(wallet_uuid, operation.amount)
 
-        if operation_body.operation == OperationType.deposit:
-            wallet = await Wallet.deposit(db, valid_uuid, operation_body.amount)
-        else:
-            wallet = await Wallet.withdraw(db, valid_uuid, operation_body.amount)
+    if operation.operation == OperationType.withdraw:
+        return await withdraw_uc.execute(wallet_uuid, operation.amount)
 
-        await db.commit()
-
-        return {"status": "success", "balance": wallet.balance}
-
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    raise HTTPException(status_code=400, detail="Unknown operation type")
 
 
+@router.post(
+    "/create", status_code=status.HTTP_201_CREATED, response_model=WalletSingleResponse
+)
+async def create_wallet(wallet: WalletCreate, uc: CreateUsecase):
+    new_wallet = await uc.execute(wallet)
+    return {"result": new_wallet}
+
+
+@router.get("/", response_model=WalletListResponse)
+async def get_wallets(uc: GetUsecase):
+    wallets = await uc.get_wallets()
+    return {"result": wallets}
+
+
+@router.delete("/{wallet_uuid}", status_code=status.HTTP_202_ACCEPTED)
+async def delete_wallet(wallet_uuid: str, uc: DeleteUsecase):
+    valid_uuid = UUID(wallet_uuid)
+    await uc.execute(valid_uuid)
+    return {"result": f"Wallet {valid_uuid} was deleted"}
