@@ -1,6 +1,13 @@
 import uuid as uuid_pkg
+
+from ..exceptions import (
+    InsufficientFundsError,
+    WalletNotEmptyError,
+    WalletNotFoundError,
+)
+
 from src.infrastructure import UnitOfWork
-from src.application.dtos import WalletCreate
+from src.application.dtos import WalletCreate, WalletResponse
 from src.infrastructure.db.models import Wallet
 
 
@@ -15,12 +22,12 @@ class GetWalletUseCase(WalletUseCase):
     async def get_wallets(self):
         async with self.uow:
             wallets = await self.uow.wallets.get_wallets()
-            return wallets
+            return [WalletResponse.model_validate(wallet) for wallet in wallets]
 
     async def get_wallet_by_uuid(self, uuid: uuid_pkg.UUID):
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid)
-            return wallet
+            return WalletResponse.model_validate(wallet)
 
 
 class WithdrawUseCase(WalletUseCase):
@@ -30,14 +37,17 @@ class WithdrawUseCase(WalletUseCase):
             wallet = await self.uow.wallets.get_by_uuid(uuid, for_update=True)
 
             if not wallet:
-                raise Exception("Not found")
+                raise WalletNotFoundError
 
             if wallet.balance < amount:
-                raise Exception("Not enough money")
+                raise InsufficientFundsError
 
             wallet.balance -= amount
 
             await self.uow.commit()
+            await self.uow.session.refresh(wallet)
+
+            return WalletResponse.model_validate(wallet)
 
 
 class DepositUseCase(WalletUseCase):
@@ -47,11 +57,14 @@ class DepositUseCase(WalletUseCase):
             wallet = await self.uow.wallets.get_by_uuid(uuid, for_update=True)
 
             if not wallet:
-                raise Exception("Not found")
+                raise WalletNotFoundError
 
             wallet.balance += amount
 
             await self.uow.commit()
+            await self.uow.session.refresh(wallet)
+
+            return WalletResponse.model_validate(wallet)
 
 
 class DeleteUseCase(WalletUseCase):
@@ -61,10 +74,10 @@ class DeleteUseCase(WalletUseCase):
             wallet = await self.uow.wallets.get_by_uuid(uuid)
 
             if not wallet:
-                raise Exception("Wallet not found")
+                raise WalletNotFoundError
 
             if wallet.balance != 0:
-                raise Exception("Cannot delete wallet with balance")
+                raise WalletNotEmptyError
 
             await self.uow.wallets.delete(wallet)
             await self.uow.commit()
@@ -81,4 +94,4 @@ class CreateUseCase(WalletUseCase):
 
             await self.uow.session.refresh(new_wallet)
 
-            return new_wallet
+            return WalletResponse.model_validate(new_wallet)
