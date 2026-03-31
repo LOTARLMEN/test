@@ -1,5 +1,6 @@
 import uuid as uuid_pkg
 
+from ..dtos.wallet import DeleteType
 from ..exceptions import (
     InsufficientFundsError,
     WalletNotEmptyError,
@@ -12,13 +13,11 @@ from src.infrastructure.db.models import Wallet
 
 
 class WalletUseCase:
-
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
 
 class GetWalletUseCase(WalletUseCase):
-
     async def get_wallets(self):
         async with self.uow:
             wallets = await self.uow.wallets.get_wallets()
@@ -31,7 +30,6 @@ class GetWalletUseCase(WalletUseCase):
 
 
 class WithdrawUseCase(WalletUseCase):
-
     async def execute(self, uuid, amount):
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid, for_update=True)
@@ -51,7 +49,6 @@ class WithdrawUseCase(WalletUseCase):
 
 
 class DepositUseCase(WalletUseCase):
-
     async def execute(self, uuid, amount):
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid, for_update=True)
@@ -68,23 +65,22 @@ class DepositUseCase(WalletUseCase):
 
 
 class DeleteUseCase(WalletUseCase):
-
-    async def execute(self, uuid: uuid_pkg.UUID):
+    async def execute(self, uuid: uuid_pkg.UUID, delete_type: DeleteType):
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid)
 
             if not wallet:
                 raise WalletNotFoundError
 
-            if wallet.balance != 0:
-                raise WalletNotEmptyError
+            if delete_type == DeleteType.only_empty_wallet:
+                if wallet.balance != 0:
+                    raise WalletNotEmptyError
 
             await self.uow.wallets.delete(wallet)
             await self.uow.commit()
 
 
 class CreateUseCase(WalletUseCase):
-
     async def execute(self, wallet: WalletCreate):
         async with self.uow:
             new_wallet = Wallet(**wallet.model_dump())
