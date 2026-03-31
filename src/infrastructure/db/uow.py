@@ -10,8 +10,9 @@ class UnitOfWork:
     async def __aenter__(self):
         return self
 
-    async def __aexit__(self, *args):
-        await self.session.rollback()
+    async def __aexit__(self, exc_type, exc, tb):
+        if exc_type:
+            await self.session.rollback()
         await self.session.close()
 
     async def commit(self):
