@@ -5,6 +5,7 @@ from src.application.dtos.wallet import (
     WalletCreate,
     WalletListResponse,
     WalletSingleResponse,
+    DeleteType,
 )
 from src.infrastructure import (
     DeleteUsecase,
@@ -57,8 +58,8 @@ async def get_wallets(uc: GetUsecase):
     return {"result": wallets}
 
 
-@router.delete("/{wallet_uuid}", status_code=status.HTTP_202_ACCEPTED)
-async def delete_wallet(wallet_uuid: str, uc: DeleteUsecase):
+@router.delete("/{delete_info}", status_code=status.HTTP_202_ACCEPTED)
+async def delete_wallet(wallet_uuid: str, delete_type: DeleteType, uc: DeleteUsecase):
     valid_uuid = UUID(wallet_uuid)
-    await uc.execute(valid_uuid)
+    await uc.execute(valid_uuid, delete_type)
     return {"result": f"Wallet {valid_uuid} was deleted"}
