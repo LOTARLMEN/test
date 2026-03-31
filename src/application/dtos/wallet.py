@@ -1,4 +1,5 @@
 from decimal import Decimal
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -21,3 +22,8 @@ class WalletListResponse(BaseModel):
 
 class WalletSingleResponse(BaseModel):
     result: WalletResponse
+
+
+class DeleteType(Enum):
+    only_empty_wallet = "ONLY EMPTY WALLET"
+    not_empty_wallet = "NOT EMPTY WALLET"
