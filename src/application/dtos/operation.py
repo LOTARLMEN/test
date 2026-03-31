@@ -8,8 +8,7 @@ class OperationType(enum.Enum):
 
 
 class OperationBody(BaseModel):
-
     operation: OperationType = Field(
-        ..., description="DEPOSIT for deposit\n" "WITHDRAW for withdraw"
+        ..., description="DEPOSIT for deposit\nWITHDRAW for withdraw"
     )
     amount: int

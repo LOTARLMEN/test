@@ -5,7 +5,6 @@ import uuid as uuid_pkg
 
 
 class WalletRepository:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
