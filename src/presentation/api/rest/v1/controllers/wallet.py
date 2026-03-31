@@ -28,7 +28,7 @@ async def get_wallet(
     return {"result": wallet}
 
 
-@router.post("/{wallet_uuid}/operation")
+@router.post("/{wallet_uuid}/operation", status_code=status.HTTP_202_ACCEPTED)
 async def wallet_operation(
     wallet_uuid: UUID,
     operation: OperationBody,
@@ -58,7 +58,7 @@ async def get_wallets(uc: GetUsecase):
     return {"result": wallets}
 
 
-@router.delete("/{delete_info}", status_code=status.HTTP_202_ACCEPTED)
+@router.delete("/{delete_type}", status_code=status.HTTP_202_ACCEPTED)
 async def delete_wallet(wallet_uuid: str, delete_type: DeleteType, uc: DeleteUsecase):
     valid_uuid = UUID(wallet_uuid)
     await uc.execute(valid_uuid, delete_type)
