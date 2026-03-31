@@ -18,7 +18,7 @@ class DataBaseHelper:
             yield session
 
 
-db_helper = DataBaseHelper(url=setting.DATABASE_URL, echo=False)
+db_helper = DataBaseHelper(url=setting.DATABASE_URL)
 
 
 async def get_async_session():
