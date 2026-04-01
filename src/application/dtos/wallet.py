@@ -10,18 +10,11 @@ class WalletCreate(BaseModel):
 
 
 class WalletResponse(BaseModel):
+    id: int
     uuid: UUID
     balance: Decimal
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class WalletListResponse(BaseModel):
-    result: list[WalletResponse]
-
-
-class WalletSingleResponse(BaseModel):
-    result: WalletResponse
 
 
 class DeleteType(Enum):
