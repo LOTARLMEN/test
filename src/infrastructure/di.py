@@ -14,30 +14,30 @@ from src.application.usecases.wallet import (
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 
 
-def get_uow(session: SessionDep):
+def get_uow(session: SessionDep) -> UnitOfWork:
     return UnitOfWork(session)
 
 
 uow_depends = Annotated[UnitOfWork, Depends(get_uow)]
 
 
-async def get_create_wallet_usecase(uow: uow_depends):
+async def get_create_wallet_usecase(uow: uow_depends) -> CreateUseCase:
     return CreateUseCase(uow)
 
 
-async def get_deposit_usecase(uow: uow_depends):
+async def get_deposit_usecase(uow: uow_depends) -> DepositUseCase:
     return DepositUseCase(uow)
 
 
-async def get_delete_usecase(uow: uow_depends):
+async def get_delete_usecase(uow: uow_depends) -> DeleteUseCase:
     return DeleteUseCase(uow)
 
 
-async def get_withdraw_usecase(uow: uow_depends):
+async def get_withdraw_usecase(uow: uow_depends) -> WithdrawUseCase:
     return WithdrawUseCase(uow)
 
 
-async def get_wallet_usecase(uow: uow_depends):
+async def get_wallet_usecase(uow: uow_depends) -> GetWalletUseCase:
     return GetWalletUseCase(uow)
 
 

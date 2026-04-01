@@ -1,4 +1,5 @@
 import uuid as uuid_pkg
+from decimal import Decimal
 
 from ..dtos.wallet import DeleteType
 from ..exceptions import (
@@ -7,9 +8,9 @@ from ..exceptions import (
     WalletNotFoundError,
 )
 
-from src.infrastructure import UnitOfWork
-from src.application.dtos import WalletCreate, WalletResponse
-from src.infrastructure.db.models import Wallet
+from src.infrastructure.db.uow import UnitOfWork
+from src.application.dtos.wallet import WalletCreate, WalletResponse
+from src.infrastructure.db.models.wallet import Wallet
 
 
 class WalletUseCase:
@@ -18,19 +19,19 @@ class WalletUseCase:
 
 
 class GetWalletUseCase(WalletUseCase):
-    async def get_wallets(self):
+    async def get_wallets(self) -> list[WalletResponse]:
         async with self.uow:
             wallets = await self.uow.wallets.get_wallets()
             return [WalletResponse.model_validate(wallet) for wallet in wallets]
 
-    async def get_wallet_by_uuid(self, uuid: uuid_pkg.UUID):
+    async def get_wallet_by_uuid(self, uuid: uuid_pkg.UUID) -> WalletResponse:
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid)
             return WalletResponse.model_validate(wallet)
 
 
 class WithdrawUseCase(WalletUseCase):
-    async def execute(self, uuid, amount):
+    async def execute(self, uuid: uuid_pkg.UUID, amount: Decimal) -> WalletResponse:
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid, for_update=True)
 
@@ -49,7 +50,7 @@ class WithdrawUseCase(WalletUseCase):
 
 
 class DepositUseCase(WalletUseCase):
-    async def execute(self, uuid, amount):
+    async def execute(self, uuid: uuid_pkg.UUID, amount: Decimal) -> WalletResponse:
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid, for_update=True)
 
@@ -65,7 +66,7 @@ class DepositUseCase(WalletUseCase):
 
 
 class DeleteUseCase(WalletUseCase):
-    async def execute(self, uuid: uuid_pkg.UUID, delete_type: DeleteType):
+    async def execute(self, uuid: uuid_pkg.UUID, delete_type: DeleteType) -> None:
         async with self.uow:
             wallet = await self.uow.wallets.get_by_uuid(uuid)
 
@@ -81,7 +82,7 @@ class DeleteUseCase(WalletUseCase):
 
 
 class CreateUseCase(WalletUseCase):
-    async def execute(self, wallet: WalletCreate):
+    async def execute(self, wallet: WalletCreate) -> WalletResponse:
         async with self.uow:
             new_wallet = Wallet(**wallet.model_dump())
 
