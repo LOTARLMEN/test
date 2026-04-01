@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
